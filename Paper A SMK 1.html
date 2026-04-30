@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explainer Paper: Payment For Risk, Constant Beta vs Dual-Beta Models</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --primary: #1e3a8a;
+      --primary2: #2563eb;
+      --line: #e2e8f0;
+      --soft: #eef2ff;
+      --good: #ecfdf5;
+      --bad: #fef2f2;
+      --warn: #fffbeb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e3a8a 58%, #2563eb);
+      color: white;
+      padding: 56px 7vw 48px;
+    }
+    header .label {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0;
+      max-width: 980px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+    header p {
+      max-width: 900px;
+      color: #dbeafe;
+      font-size: 18px;
+      margin-top: 18px;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 7vw;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 650;
+      font-size: 14px;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+    nav a:hover { background: var(--soft); }
+    main {
+      padding: 34px 7vw 72px;
+      max-width: 1280px;
+      margin: auto;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 30px;
+      margin: 24px 0;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, .05);
+    }
+    h2 {
+      font-size: 30px;
+      letter-spacing: -0.03em;
+      margin: 0 0 14px;
+      color: #0f172a;
+    }
+    h3 {
+      margin-top: 24px;
+      color: var(--primary);
+      font-size: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: #fff;
+    }
+    .card strong { color: #0f172a; }
+    .insight {
+      background: var(--soft);
+      border-left: 5px solid var(--primary2);
+      padding: 18px 20px;
+      border-radius: 16px;
+      margin: 18px 0;
+    }
+    .formula {
+      font-family: "Times New Roman", serif;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 14px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 750;
+    }
+    tr:last-child td { border-bottom: none; }
+    .tag {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .yes { background: var(--good); color: #047857; }
+    .no { background: var(--bad); color: #b91c1c; }
+    .mixed { background: var(--warn); color: #92400e; }
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .step {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      position: relative;
+    }
+    .step .num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    footer {
+      color: var(--muted);
+      font-size: 13px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    @media (max-width: 900px) {
+      .grid, .two, .flow { grid-template-columns: 1fr; }
+      section { padding: 22px; }
+      nav { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="label">Academic Paper Explainer</div>
+    <h1>Payment For Risk: Constant Beta vs Dual-Beta Models</h1>
+    <p style="margin-top:10px; font-weight:600; color:#e0e7ff;">
+    Disusun oleh: Naufal Akbar & Hafidhan Dzifhan Hizbullah
+    </p>
+
+    <p>Penjelasan terstruktur untuk pembaca yang belum pernah membaca paper Pettengill, Sundaram, dan Mathur (2002). Fokus utama halaman ini adalah isu penelitian, latar belakang debat, metodologi, kontribusi pembaruan, serta pembahasan tabel secara lengkap.</p>
+  </header>
+
+  <nav>
+    <a href="#ringkasan">Ringkasan</a>
+    <a href="#isu">Isu</a>
+    <a href="#latar">Latar Belakang</a>
+    <a href="#metode">Metodologi</a>
+    <a href="#pembaruan">Pembaruan</a>
+    <a href="#pembahasan">Pembahasan Tabel</a>
+    <a href="#perbandingan">Analisis Perbandingan</a>
+    <a href="#implikasi">Implikasi</a>
+    <a href="#hipotesis-variabel">Hipotesis & Variabel</a>
+    <a href="#kesimpulan">Kesimpulan</a>
+  </nav>
+
+  <main>
+    <section id="ringkasan">
+      <h2>1. Ringkasan Eksekutif</h2>
+      <p>Paper ini membahas salah satu pertanyaan paling fundamental dalam asset pricing: apakah investor benar-benar menerima kompensasi return karena menanggung risiko sistematis yang diukur dengan beta. Fama dan French (1992) menemukan bahwa beta tidak signifikan, sementara size dan book-to-market ratio lebih mampu menjelaskan return. Pettengill, Sundaram, dan Mathur menanggapi bahwa masalah utama bukan terletak pada beta, melainkan pada cara pengujian yang mencampur kondisi pasar naik dan pasar turun.</p>
+      <div class="insight">
+        <strong>Inti argumen:</strong> beta terlihat tidak relevan jika bull market dan bear market digabung. Ketika pasar dipisahkan, beta kembali signifikan. Dengan demikian, market segmentation adalah syarat kunci, sedangkan dual-beta bukan syarat mutlak.
+      </div>
+      <div class="grid">
+        <div class="card"><strong>Pertanyaan utama</strong><br />Apakah beta masih relevan sebagai ukuran risiko yang dihargai pasar?</div>
+        <div class="card"><strong>Jawaban paper</strong><br />Ya, tetapi hubungan beta dan return bersifat kondisional terhadap arah pasar.</div>
+        <div class="card"><strong>Kontribusi utama</strong><br />Membuktikan bahwa pemisahan pasar cukup untuk menemukan hubungan beta-return yang signifikan.</div>
+      </div>
+    </section>
+
+    <section id="isu">
+      <h2>2. Isu Penelitian</h2>
+      <p>Isu besar paper ini muncul dari kritik terhadap CAPM. Dalam CAPM, sekuritas dengan beta tinggi seharusnya memberikan expected return yang lebih tinggi karena investor menanggung risiko sistematis yang lebih besar. Namun, Fama dan French menemukan bahwa beta tidak menjelaskan variasi return lintas saham, sedangkan size dan BE/ME justru signifikan.</p>
+      <p>Pettengill, Sundaram, dan Mathur mempertanyakan kesimpulan tersebut. Mereka berpendapat bahwa pengujian terhadap realized return tidak boleh disamakan begitu saja dengan pengujian terhadap expected return. Dalam realized return, hubungan beta dan return bergantung pada kondisi pasar. Saat pasar naik, beta tinggi seharusnya memberi return lebih tinggi. Saat pasar turun, beta tinggi justru seharusnya memberi return lebih rendah.</p>
+      <div class="formula">Up market: beta tinggi → return lebih tinggi<br />Down market: beta tinggi → return lebih rendah<br />Jika digabung: efek positif + efek negatif → beta terlihat tidak signifikan</div>
+    </section>
+
+    <section id="latar">
+      <h2>3. Latar Belakang Teoretis</h2>
+      <h3>CAPM dan Beta</h3>
+      <p>CAPM menyatakan bahwa risiko sistematis, bukan risiko total, adalah risiko yang relevan bagi investor terdiversifikasi. Beta mengukur sensitivitas return saham terhadap return pasar. Secara konseptual, semakin tinggi beta, semakin tinggi return yang disyaratkan investor.</p>
+
+      <h3>Fama dan French: Kritik terhadap Beta</h3>
+      <p>Fama dan French menunjukkan bahwa beta tidak signifikan dalam menjelaskan return lintas saham. Mereka menemukan bahwa ukuran perusahaan dan rasio BE/ME lebih kuat, sehingga muncul klaim bahwa beta tidak lagi menjadi faktor risiko utama.</p>
+
+      <h3>Howton dan Peterson: Solusi Dual-Beta</h3>
+      <p>Howton dan Peterson berargumen bahwa beta harus dibedakan menjadi bull-market beta dan bear-market beta. Dengan pendekatan dual-beta, mereka menemukan kembali signifikansi beta.</p>
+
+      <h3>Pettengill, Sundaram, dan Mathur: Solusi Market Segmentation</h3>
+      <p>PSM menyatakan bahwa dual-beta mungkin informatif, tetapi bukan syarat utama. Syarat yang lebih fundamental adalah memisahkan observasi pasar berdasarkan market excess return positif dan negatif.</p>
+    </section>
+
+    <section id="metode">
+      <h2>4. Metodologi Penelitian</h2>
+      <p>Paper ini menggunakan data saham non-keuangan dari NYSE, AMEX, dan Nasdaq. Periode observasi utama adalah 1975 sampai 1994. Peneliti membentuk 100 portofolio berdasarkan kombinasi size dan beta. Return saham kemudian diregresikan terhadap BE/ME, size, dan beta, baik dengan pasar digabung maupun pasar dipisah menjadi up market dan down market.</p>
+
+      <div class="flow">
+        <div class="step"><div class="num">1</div><strong>Data</strong><br />Saham non-keuangan dari CRSP dan Compustat.</div>
+        <div class="step"><div class="num">2</div><strong>Sortir portofolio</strong><br />Saham disortir menjadi 100 portofolio berdasarkan size dan beta.</div>
+        <div class="step"><div class="num">3</div><strong>Regresi</strong><br />Return diregresikan terhadap BE/ME, size, dan beta.</div>
+        <div class="step"><div class="num">4</div><strong>Segmentasi</strong><br />Pasar dipisah menjadi up market dan down market berdasarkan market excess return.</div>
+      </div>
+
+      <h3>Definisi Kondisi Pasar</h3>
+      <table>
+        <tr><th>Kondisi</th><th>Kriteria</th><th>Ekspektasi terhadap beta</th></tr>
+        <tr><td>Up market atau bull market</td><td>Market excess return positif</td><td>Beta berhubungan positif dengan return</td></tr>
+        <tr><td>Down market atau bear market</td><td>Market excess return negatif</td><td>Beta berhubungan negatif dengan return</td></tr>
+      </table>
+    </section>
+
+    <section id="pembaruan">
+      <h2>5. Pembaruan atau Novelty Paper</h2>
+      <p>Kontribusi pembaruan paper ini terletak pada klarifikasi metodologis. Paper ini tidak sekadar membuktikan bahwa beta signifikan, tetapi membedakan dua hal yang sebelumnya berpotensi tertukar: apakah signifikansi beta muncul karena penggunaan dual-beta, atau karena pemisahan pasar bull dan bear.</p>
+      <div class="two">
+        <div class="card">
+          <strong>Sebelum paper ini</strong>
+          <p>HP menekankan bahwa dual-beta merupakan alasan beta kembali signifikan.</p>
+        </div>
+        <div class="card">
+          <strong>Kontribusi PSM 2002</strong>
+          <p>PSM menunjukkan bahwa constant beta tetap signifikan asalkan data dipisah menjadi up market dan down market.</p>
+        </div>
+      </div>
+      <p>Dengan demikian, paper ini memperkuat argumen parsimony: model yang lebih sederhana dapat menjelaskan hubungan beta-return jika prosedur empirisnya tepat.</p>
+    </section>
+
+    <section id="pembahasan">
+      <h2>6. Pembahasan Tabel Lengkap</h2>
+
+      <h3>Table 1: Semua Kondisi Pasar Digabung</h3>
+      <p>Tabel pertama menunjukkan hasil ketika seluruh observasi pasar digabung tanpa membedakan kondisi up market dan down market. Hasilnya konsisten dengan Fama dan French: beta tidak signifikan, sedangkan BE/ME dan size signifikan.</p>
+      <table>
+        <tr><th>Variabel</th><th>Koefisien</th><th>t-statistik</th><th>Signifikansi</th><th>Interpretasi</th></tr>
+        <tr><td>BE/ME</td><td>0.0020</td><td>2.53</td><td><span class="tag yes">Signifikan 5%</span></td><td>Saham dengan BE/ME tinggi cenderung memiliki return lebih tinggi.</td></tr>
+        <tr><td>Size</td><td>-0.0019</td><td>-3.88</td><td><span class="tag yes">Signifikan 1%</span></td><td>Perusahaan kecil cenderung memiliki return lebih tinggi.</td></tr>
+        <tr><td>Beta</td><td>-0.0037</td><td>-0.94</td><td><span class="tag no">Tidak signifikan</span></td><td>Jika pasar digabung, beta tampak tidak menjelaskan return.</td></tr>
+      </table>
+      <div class="insight"><strong>Makna Table 1:</strong> jika hanya melihat tabel ini, pembaca bisa menyimpulkan bahwa Fama dan French benar. Namun, paper ini menunjukkan bahwa kesimpulan tersebut belum lengkap karena pasar belum dipisahkan.</div>
+
+      <h3>Table 2: Pasar Dipisah Menjadi Bull dan Bear Market</h3>
+      <p>Tabel kedua adalah inti paper. Setelah pasar dipisah, beta menjadi sangat signifikan baik dengan constant beta maupun dual-beta. Ini membuktikan bahwa segmentasi pasar adalah faktor kritis.</p>
+      <table>
+        <tr><th>Kondisi Pasar</th><th>Jenis Beta</th><th>BE/ME</th><th>Size</th><th>Beta</th><th>Kesimpulan</th></tr>
+        <tr>
+          <td>Bull market</td><td>Constant risk beta</td><td>0.0000, tidak signifikan</td><td>-0.0014, signifikan 10%</td><td>0.0302, t = 7.02, signifikan 1%</td><td>Beta tinggi menghasilkan return lebih tinggi saat pasar naik.</td>
+        </tr>
+        <tr>
+          <td>Bull market</td><td>Bull-market beta</td><td>-0.0008, tidak signifikan</td><td>-0.0007, tidak signifikan</td><td>0.0224, t = 5.76, signifikan 1%</td><td>Dual-beta juga signifikan, tetapi tidak lebih fundamental daripada segmentasi pasar.</td>
+        </tr>
+        <tr>
+          <td>Bear market</td><td>Constant risk beta</td><td>0.0047, signifikan 1%</td><td>-0.0026, signifikan 1%</td><td>-0.0450, t = -12.26, signifikan 1%</td><td>Beta tinggi mengalami penurunan return lebih besar saat pasar turun.</td>
+        </tr>
+        <tr>
+          <td>Bear market</td><td>Bear-market beta</td><td>0.0039, signifikan 1%</td><td>-0.0029, signifikan 1%</td><td>-0.0292, t = -5.96, signifikan 1%</td><td>Hubungan negatif tetap muncul pada dual-beta.</td>
+        </tr>
+      </table>
+      <div class="insight"><strong>Makna Table 2:</strong> constant beta sudah cukup untuk menemukan hubungan beta-return yang signifikan. Dual-beta dapat memberi informasi tambahan, tetapi bukan prasyarat utama.</div>
+
+      <h3>Table 3: Efek Musiman Januari dan Non-Januari</h3>
+      <p>Tabel ketiga menguji apakah hasil tetap stabil jika data dipisah berdasarkan bulan Januari dan bulan lainnya. Hasilnya memperlihatkan bahwa hubungan beta-return relatif konsisten, sedangkan size effect memiliki pola musiman yang kuat, terutama pada Januari.</p>
+      <table>
+        <tr><th>Kondisi</th><th>Jenis Beta</th><th>BE/ME Januari</th><th>BE/ME Non-Januari</th><th>Size Januari</th><th>Size Non-Januari</th><th>Beta Januari</th><th>Beta Non-Januari</th></tr>
+        <tr><td>Bull</td><td>Constant beta</td><td>0.0057, tidak signifikan</td><td>-0.0007, tidak signifikan</td><td>-0.0114, signifikan 1%</td><td>-0.0002, tidak signifikan</td><td>0.0683, signifikan 1%</td><td>0.0256, signifikan 1%</td></tr>
+        <tr><td>Bull</td><td>Bull beta</td><td>0.0003, tidak signifikan</td><td>-0.0009, tidak signifikan</td><td>-0.0087, signifikan 1%</td><td>0.0001, tidak signifikan</td><td>0.0416, signifikan 1%</td><td>0.0205, signifikan 1%</td></tr>
+        <tr><td>Bear</td><td>Constant beta</td><td>0.0120, signifikan 1%</td><td>0.0043, signifikan 1%</td><td>-0.0106, signifikan 1%</td><td>-0.0022, signifikan 1%</td><td>-0.0404, signifikan 1%</td><td>-0.0501, signifikan 1%</td></tr>
+        <tr><td>Bear</td><td>Bear beta</td><td>0.0112, signifikan 1%</td><td>0.0033, signifikan 1%</td><td>-0.0092, signifikan 1%</td><td>-0.0024, signifikan 1%</td><td>-0.0140, tidak signifikan</td><td>-0.0304, signifikan 1%</td></tr>
+      </table>
+      <div class="insight"><strong>Makna Table 3:</strong> beta tetap memiliki hubungan kondisional yang kuat dengan return. Namun, size premium sangat terkonsentrasi pada Januari, sehingga sulit diklaim sebagai kompensasi risiko murni yang stabil sepanjang tahun.</div>
+    </section>
+
+
+    <section id="perbandingan">
+      <h2>7. Analisis Mendalam dan Perbandingan dengan Paper Sebelumnya</h2>
+
+      <h3>7.1 Posisi Paper PSM 2002 dalam Debat Asset Pricing</h3>
+      <p>Paper Pettengill, Sundaram, dan Mathur (2002), selanjutnya disebut PSM, berada dalam debat besar mengenai apakah beta masih relevan sebagai ukuran risiko sistematis. Fama dan French sebelumnya menemukan bahwa beta tidak signifikan dalam menjelaskan return lintas saham, sedangkan size dan book-to-market ratio lebih dominan. PSM menolak kesimpulan bahwa beta tidak relevan. Mereka berargumen bahwa beta tampak tidak signifikan karena pengujian empiris mencampur dua kondisi pasar yang secara teoretis memiliki arah hubungan berbeda.</p>
+      <p>Dalam up market, beta tinggi seharusnya menghasilkan return lebih tinggi karena saham berisiko tinggi bergerak lebih kuat ketika pasar naik. Dalam down market, beta tinggi justru seharusnya menghasilkan return lebih rendah karena saham berisiko tinggi turun lebih dalam ketika pasar melemah. Jika dua kondisi ini digabung dalam satu regresi, efek positif dan negatif saling meniadakan, sehingga beta tampak tidak signifikan.</p>
+
+      <div class="insight">
+        <strong>Inti PSM 2002:</strong> beta tidak mati. Yang bermasalah adalah prosedur pengujian yang tidak memisahkan bull market dan bear market. Market segmentation adalah syarat utama untuk menemukan kembali hubungan beta dan return.
+      </div>
+
+      <h3>7.2 Posisi Paper Paramita et al. dalam Literatur Reksa Dana</h3>
+      <p>Paper Paramita, Primiana, Sudarsono, dan Febrian memindahkan diskusi beta dari ranah asset pricing saham individual ke ranah pengukuran kinerja reksa dana saham. Fokusnya bukan lagi sekadar apakah beta dihargai oleh pasar, tetapi bagaimana membangun model evaluasi kinerja reksa dana yang lebih akurat daripada Jensen Alpha dan Treynor-Mazuy unconditional.</p>
+      <p>Paper ini mengidentifikasi dua kelemahan Jensen Alpha. Pertama, Jensen Alpha mengasumsikan hubungan linear antara risiko pasar dan return portofolio. Kedua, Jensen Alpha hanya memakai satu faktor risiko, yaitu risiko pasar. Untuk mengatasi masalah tersebut, paper ini mengembangkan model Treynor-Mazuy Multi Factor dengan memasukkan unsur market timing, faktor makroekonomi, APT, dan Conditional Performance Evaluation.</p>
+
+      <h3>7.3 Perbandingan Konteks Penelitian</h3>
+      <table>
+        <tr>
+          <th>Aspek</th>
+          <th>PSM 2002</th>
+          <th>Paramita et al.</th>
+          <th>Makna Perbandingan</th>
+        </tr>
+        <tr>
+          <td>Konteks akademik</td>
+          <td>Debat CAPM, Fama-French, dan relevansi beta dalam asset pricing.</td>
+          <td>Pengembangan model pengukuran kinerja reksa dana saham.</td>
+          <td>PSM bersifat fondasional, sedangkan Paramita et al. bersifat aplikatif dan model-building.</td>
+        </tr>
+        <tr>
+          <td>Objek penelitian</td>
+          <td>Saham non-keuangan di NYSE, AMEX, dan Nasdaq.</td>
+          <td>30 reksa dana saham di Indonesia.</td>
+          <td>Objek berubah dari sekuritas individual ke portofolio yang dikelola manajer investasi.</td>
+        </tr>
+        <tr>
+          <td>Pasar</td>
+          <td>Amerika Serikat, pasar modal maju.</td>
+          <td>Indonesia, emerging market.</td>
+          <td>Paper kedua memperluas pengujian ke pasar yang lebih sensitif terhadap faktor makro.</td>
+        </tr>
+        <tr>
+          <td>Periode</td>
+          <td>1975 sampai 1994.</td>
+          <td>2008 sampai 2012.</td>
+          <td>Paramita et al. berada dalam konteks pasca krisis global dan dinamika pasar Indonesia.</td>
+        </tr>
+        <tr>
+          <td>Tujuan utama</td>
+          <td>Menguji apakah beta tetap signifikan setelah pasar dipisahkan.</td>
+          <td>Membangun model kinerja reksa dana yang valid dan robust.</td>
+          <td>Paper kedua menggunakan logika PSM untuk memperbaiki spesifikasi model kinerja.</td>
+        </tr>
+      </table>
+
+      <h3>7.4 Perbandingan Metodologi</h3>
+      <p>PSM menggunakan regresi lintas-seksi return saham terhadap beta, size, dan BE/ME. Mereka membandingkan hasil saat pasar digabung dengan hasil saat pasar dipisahkan menjadi up market dan down market. Tujuannya adalah menguji apakah constant beta tetap signifikan tanpa perlu menggunakan dual-beta.</p>
+      <p>Paramita et al. menggunakan metodologi yang lebih kompleks. Mereka melakukan uji stasioneritas ADF, membangun beberapa alternatif model Treynor-Mazuy Multi Factor, menguji model melalui nested model, dan menggunakan two-pass regression. Model diuji dalam kondisi single beta, up-beta, down-beta, dan dual beta. Dengan demikian, paper ini bukan hanya menguji signifikansi beta, tetapi juga menilai validitas dan robustness model pengukuran kinerja.</p>
+
+      <table>
+        <tr>
+          <th>Aspek metodologis</th>
+          <th>PSM 2002</th>
+          <th>Paramita et al.</th>
+        </tr>
+        <tr>
+          <td>Variabel utama</td>
+          <td>Beta, size, BE/ME, return saham.</td>
+          <td>Risiko pasar, inflasi, suku bunga, jumlah uang beredar, nilai tukar, market timing, return reksa dana.</td>
+        </tr>
+        <tr>
+          <td>Model utama</td>
+          <td>Cross-sectional asset pricing regression.</td>
+          <td>Treynor-Mazuy Multi Factor dengan nested model dan two-pass regression.</td>
+        </tr>
+        <tr>
+          <td>Perlakuan kondisi pasar</td>
+          <td>Market segmentation berdasarkan up market dan down market.</td>
+          <td>Pemisahan single beta, up-beta, down-beta, dan dual beta.</td>
+        </tr>
+        <tr>
+          <td>Tujuan pengujian</td>
+          <td>Menguji apakah beta tetap signifikan.</td>
+          <td>Menguji model mana yang paling valid dan robust untuk kinerja reksa dana.</td>
+        </tr>
+      </table>
+
+      <h3>7.5 Perbandingan Hasil Utama</h3>
+      <p>Hasil PSM menunjukkan bahwa ketika seluruh pasar digabung, beta tidak signifikan. Namun, setelah pasar dipisahkan, beta menjadi positif signifikan pada bull market dan negatif signifikan pada bear market. Ini membuktikan bahwa beta memiliki hubungan kondisional dengan realized return.</p>
+      <p>Hasil Paramita et al. menunjukkan pola yang lebih kompleks. Pada pengujian constant beta, model terbaik adalah Treynor-Mazuy Two Factors, terutama dengan faktor suku bunga dan jumlah uang beredar. Namun, model ini belum memiliki spesifikasi yang baik karena arah hubungan beberapa variabel tidak konsisten dengan teori. Setelah up-beta dan down-beta dipisahkan, model berubah menjadi Treynor-Mazuy Five Factors yang lebih valid secara teoritis, dengan faktor risiko pasar, suku bunga, jumlah uang beredar, nilai tukar, dan market timing yang signifikan.</p>
+
+      <table>
+        <tr>
+          <th>Dimensi hasil</th>
+          <th>PSM 2002</th>
+          <th>Paramita et al.</th>
+          <th>Interpretasi</th>
+        </tr>
+        <tr>
+          <td>Ketika pasar tidak dipisah</td>
+          <td>Beta tidak signifikan.</td>
+          <td>Single beta menghasilkan model dua faktor, tetapi spesifikasi belum baik.</td>
+          <td>Agregasi kondisi pasar melemahkan kualitas hasil empiris.</td>
+        </tr>
+        <tr>
+          <td>Ketika pasar dipisah</td>
+          <td>Beta signifikan positif pada up market dan signifikan negatif pada down market.</td>
+          <td>Model lima faktor menjadi lebih konsisten dan robust.</td>
+          <td>Pemisahan kondisi pasar memperbaiki validitas model.</td>
+        </tr>
+        <tr>
+          <td>Peran dual beta</td>
+          <td>Tidak wajib, karena constant beta sudah signifikan dengan market segmentation.</td>
+          <td>Penting untuk memperbaiki spesifikasi model kinerja reksa dana.</td>
+          <td>Di sinilah terdapat perbedaan konseptual paling penting antara kedua paper.</td>
+        </tr>
+        <tr>
+          <td>Implikasi terhadap CAPM</td>
+          <td>CAPM tidak harus ditolak sepenuhnya; beta tetap relevan secara kondisional.</td>
+          <td>Jensen Alpha berbasis CAPM terlalu sederhana untuk reksa dana Indonesia.</td>
+          <td>Paper kedua menerima relevansi beta, tetapi menganggap model satu faktor tidak memadai.</td>
+        </tr>
+      </table>
+
+      <h3>7.6 Hubungan Konseptual: Dari Asset Pricing ke Performance Measurement</h3>
+      <p>Hubungan kedua paper dapat dipahami sebagai hubungan antara fondasi teoretis dan pengembangan aplikatif. PSM membangun dasar bahwa beta harus diuji secara kondisional. Paramita et al. menggunakan logika tersebut untuk memperbaiki model pengukuran kinerja reksa dana. Dengan kata lain, PSM menjawab problem “apakah beta relevan?”, sedangkan Paramita et al. menjawab problem “bagaimana beta dan faktor sistematis lain harus dimasukkan dalam model kinerja reksa dana?”.</p>
+
+      <div class="flow">
+        <div class="step"><div class="num">1</div><strong>CAPM</strong><br />Beta diasumsikan sebagai risiko utama yang menentukan expected return.</div>
+        <div class="step"><div class="num">2</div><strong>Fama-French</strong><br />Beta dianggap lemah; size dan BE/ME lebih dominan.</div>
+        <div class="step"><div class="num">3</div><strong>PSM</strong><br />Beta kembali signifikan jika pasar dipisah menjadi up dan down market.</div>
+        <div class="step"><div class="num">4</div><strong>Paramita et al.</strong><br />Logika varying beta diterapkan untuk membangun model kinerja reksa dana multifaktor.</div>
+      </div>
+
+      <h3>7.7 Pembaruan Utama Paper Paramita et al. terhadap PSM</h3>
+      <p>Pembaruan pertama adalah perluasan domain. PSM bekerja dalam kerangka asset pricing saham, sedangkan Paramita et al. bekerja dalam kerangka mutual fund performance. Ini signifikan karena reksa dana mengandung unsur keputusan aktif manajer investasi, seperti stock selection dan market timing, yang tidak menjadi fokus utama PSM.</p>
+      <p>Pembaruan kedua adalah perluasan faktor risiko. PSM memakai beta, size, dan BE/ME. Paramita et al. memasukkan faktor makroekonomi seperti inflasi, suku bunga, jumlah uang beredar, dan nilai tukar. Ini membuat model lebih sesuai untuk konteks emerging market, terutama Indonesia, tempat return portofolio sangat mungkin dipengaruhi oleh kebijakan moneter dan volatilitas nilai tukar.</p>
+      <p>Pembaruan ketiga adalah integrasi model. Paramita et al. menggabungkan Jensen Alpha, Treynor-Mazuy, APT, dan Conditional Performance Evaluation. Dengan demikian, paper ini bukan hanya mengadopsi ide beta kondisional, tetapi membangun kerangka pengukuran kinerja yang lebih luas.</p>
+
+      <h3>7.8 Perbedaan Sikap terhadap Constant Beta dan Dual Beta</h3>
+      <p>Perbedaan paling menarik terletak pada interpretasi dual beta. PSM menyatakan bahwa dual beta dapat memberi informasi tambahan, tetapi bukan syarat utama untuk menemukan hubungan beta-return. Menurut PSM, market segmentation sudah cukup. Sebaliknya, Paramita et al. menunjukkan bahwa dalam konteks reksa dana saham Indonesia, pemisahan up-beta dan down-beta menghasilkan model yang lebih baik daripada single beta.</p>
+      <p>Perbedaan ini tidak harus dianggap sebagai kontradiksi penuh. PSM berbicara tentang signifikansi beta dalam return saham. Paramita et al. berbicara tentang spesifikasi model pengukuran kinerja reksa dana. Jadi, dual beta mungkin tidak wajib untuk membuktikan beta signifikan, tetapi dapat menjadi penting untuk membangun model performance measurement yang lebih tepat.</p>
+
+      <h3>7.10 Kesimpulan Integratif</h3>
+      <table>
+        <tr>
+          <th>Pertanyaan integratif</th>
+          <th>Jawaban</th>
+        </tr>
+        <tr>
+          <td>Apa konteks utama PSM?</td>
+          <td>Membela relevansi beta dalam asset pricing melalui market segmentation.</td>
+        </tr>
+        <tr>
+          <td>Apa konteks utama Paramita et al.?</td>
+          <td>Membangun model pengukuran kinerja reksa dana saham yang lebih akurat dan robust.</td>
+        </tr>
+        <tr>
+          <td>Apa hubungan keduanya?</td>
+          <td>Paramita et al. menggunakan gagasan PSM tentang beta yang berbeda antar kondisi pasar untuk memperbaiki model Treynor-Mazuy multifaktor.</td>
+        </tr>
+        <tr>
+          <td>Apa perbedaan terbesar?</td>
+          <td>PSM menyatakan dual beta tidak wajib, sedangkan Paramita et al. menemukan dual beta penting untuk memperbaiki spesifikasi model reksa dana.</td>
+        </tr>
+        <tr>
+          <td>Apa pembaruan utama paper kedua?</td>
+          <td>Integrasi Treynor-Mazuy, APT, CPE, faktor makroekonomi, market timing, dan varying beta dalam konteks reksa dana saham Indonesia.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section id="implikasi">
+      <h2>8. Implikasi Akademik dan Praktis</h2>
+      <p>Secara akademik, paper ini mengingatkan bahwa hasil empiris sangat bergantung pada desain pengujian. Beta dapat tampak mati jika model mencampur kondisi pasar yang secara teoretis memiliki arah hubungan berlawanan. Secara praktis, investor dan analis tidak seharusnya menilai risiko beta hanya dari rata-rata seluruh periode pasar.</p>
+      <div class="grid">
+        <div class="card"><strong>Untuk peneliti</strong><br />Pisahkan kondisi pasar sebelum menyimpulkan apakah beta signifikan atau tidak.</div>
+        <div class="card"><strong>Untuk investor</strong><br />Beta tinggi menguntungkan saat pasar naik, tetapi memperbesar kerugian saat pasar turun.</div>
+        <div class="card"><strong>Untuk manajer portofolio</strong><br />Analisis risiko harus memperhatikan rezim pasar, bukan hanya beta rata-rata.</div>
+      </div>
+    </section>
+
+
+    <section id="hipotesis-variabel">
+      <h2>9. Hipotesis yang Ditolak dan Klasifikasi Variabel</h2>
+
+      <h3>9.1 Paper PSM 2002: Payment For Risk, Constant Beta vs Dual-Beta Models</h3>
+      <p>Secara konseptual, paper PSM menguji ulang klaim bahwa beta tidak relevan dalam menjelaskan return saham. Klaim tersebut muncul dari temuan Fama dan French bahwa beta tidak signifikan ketika return saham diuji tanpa memisahkan kondisi pasar. PSM menunjukkan bahwa kesimpulan tersebut terlalu cepat karena hubungan beta dan return bersifat kondisional.</p>
+
+      <table>
+        <tr><th>Hipotesis</th><th>Status</th><th>Alasan</th></tr>
+        <tr>
+          <td>Beta tidak berhubungan signifikan dengan return saham.</td>
+          <td><span class="tag no">Ditolak</span></td>
+          <td>Ketika pasar dipisahkan menjadi up market dan down market, beta terbukti signifikan. Pada up market beta berhubungan positif dengan return, sedangkan pada down market beta berhubungan negatif dengan return.</td>
+        </tr>
+        <tr>
+          <td>Beta berhubungan dengan return secara kondisional berdasarkan kondisi pasar.</td>
+          <td><span class="tag yes">Diterima</span></td>
+          <td>Hasil empiris mendukung bahwa arah hubungan beta dan return berubah sesuai kondisi pasar.</td>
+        </tr>
+        <tr>
+          <td>Dual beta wajib digunakan agar beta menjadi signifikan.</td>
+          <td><span class="tag no">Ditolak</span></td>
+          <td>PSM menunjukkan bahwa constant beta tetap signifikan jika pasar sudah dipisahkan. Dengan demikian, market segmentation lebih fundamental daripada dual-beta.</td>
+        </tr>
+      </table>
+
+      <h3>9.2 Klasifikasi Variabel dalam Paper PSM 2002</h3>
+      <table>
+        <tr><th>Jenis Variabel</th><th>Variabel</th><th>Peran dalam Model</th></tr>
+        <tr><td>Variabel terikat atau dependent variable</td><td>Return saham atau return portofolio</td><td>Variabel yang dijelaskan oleh beta, size, dan BE/ME.</td></tr>
+        <tr><td>Variabel bebas utama atau independent variable</td><td>Beta</td><td>Mengukur risiko sistematis saham terhadap pasar.</td></tr>
+        <tr><td>Variabel kontrol</td><td>Size dan BE/ME</td><td>Digunakan untuk memastikan apakah beta tetap signifikan setelah mempertimbangkan ukuran perusahaan dan book-to-market ratio.</td></tr>
+        <tr><td>Variabel moderasi</td><td>Kondisi pasar, yaitu up market dan down market</td><td>Memoderasi arah hubungan beta dan return. Hubungan menjadi positif saat up market dan negatif saat down market.</td></tr>
+        <tr><td>Variabel turunan</td><td>Market excess return</td><td>Digunakan untuk menentukan apakah suatu periode termasuk up market atau down market.</td></tr>
+      </table>
+
+      <h3>9.3 Paper Paramita et al.: Treynor-Mazuy Multi-Factor untuk Reksa Dana Indonesia</h3>
+      <p>Paper Paramita et al. menguji apakah model single beta cukup untuk menjelaskan return reksa dana saham Indonesia. Paper ini kemudian membandingkan model Treynor-Mazuy Multi Factor dalam kondisi single beta, up-beta, down-beta, dan dual beta. Hasilnya menunjukkan bahwa single beta belum menghasilkan model yang baik, sedangkan dual beta menghasilkan model lima faktor yang lebih valid dan konsisten dengan teori.</p>
+
+      <table>
+        <tr><th>Hipotesis</th><th>Status</th><th>Alasan</th></tr>
+        <tr>
+          <td>Single beta cukup untuk menjelaskan return reksa dana saham.</td>
+          <td><span class="tag no">Ditolak</span></td>
+          <td>Model single beta menghasilkan spesifikasi yang kurang baik. Beberapa koefisien tidak signifikan dan sebagian arah hubungan tidak konsisten dengan teori.</td>
+        </tr>
+        <tr>
+          <td>Faktor makroekonomi dan market timing meningkatkan kemampuan model.</td>
+          <td><span class="tag yes">Diterima</span></td>
+          <td>Faktor seperti suku bunga, jumlah uang beredar, nilai tukar, risiko pasar, dan market timing terbukti berperan dalam model yang lebih baik.</td>
+        </tr>
+        <tr>
+          <td>Dual beta menghasilkan model pengukuran kinerja yang lebih baik.</td>
+          <td><span class="tag yes">Diterima</span></td>
+          <td>Pengujian up-beta dan down-beta menghasilkan Treynor-Mazuy Five Factors Model yang lebih valid, robust, dan lebih sesuai dengan teori.</td>
+        </tr>
+      </table>
+
+      <h3>9.4 Klasifikasi Variabel dalam Paper Paramita et al.</h3>
+      <table>
+        <tr><th>Jenis Variabel</th><th>Variabel</th><th>Peran dalam Model</th></tr>
+        <tr><td>Variabel terikat atau dependent variable</td><td>Return reksa dana saham atau excess return portofolio</td><td>Variabel utama yang ingin dijelaskan oleh model Treynor-Mazuy Multi Factor.</td></tr>
+        <tr><td>Variabel bebas utama atau independent variable</td><td>Risiko pasar atau beta pasar</td><td>Mengukur sensitivitas return reksa dana terhadap return pasar.</td></tr>
+        <tr><td>Variabel bebas tambahan</td><td>Inflasi, suku bunga, jumlah uang beredar, dan nilai tukar</td><td>Mewakili faktor risiko makroekonomi dalam kerangka multifaktor.</td></tr>
+        <tr><td>Variabel manajerial</td><td>Market timing</td><td>Mengukur kemampuan manajer investasi menyesuaikan portofolio terhadap kondisi pasar.</td></tr>
+        <tr><td>Variabel moderasi</td><td>Kondisi pasar, yaitu up-beta dan down-beta</td><td>Menunjukkan bahwa hubungan risiko dan return berbeda antara kondisi pasar naik dan turun.</td></tr>
+        <tr><td>Variabel turunan</td><td>Beta up dan beta down</td><td>Dihasilkan dari pemisahan kondisi pasar untuk menangkap sensitivitas risiko yang berbeda.</td></tr>
+      </table>
+
+      <h3>9.5 Perbandingan Singkat Kedua Paper</h3>
+      <table>
+        <tr><th>Aspek</th><th>PSM 2002</th><th>Paramita et al.</th></tr>
+        <tr><td>Hipotesis yang ditolak</td><td>Beta tidak signifikan; dual beta wajib digunakan.</td><td>Single beta cukup untuk mengukur kinerja reksa dana.</td></tr>
+        <tr><td>Variabel terikat</td><td>Return saham atau portofolio saham.</td><td>Return reksa dana saham.</td></tr>
+        <tr><td>Variabel bebas utama</td><td>Beta.</td><td>Beta pasar, faktor makro, dan market timing.</td></tr>
+        <tr><td>Variabel kontrol</td><td>Size dan BE/ME.</td><td>Struktur multifaktor berperan sebagai kontrol risiko sistematis tambahan.</td></tr>
+        <tr><td>Variabel moderasi</td><td>Up market dan down market.</td><td>Up-beta dan down-beta.</td></tr>
+        <tr><td>Kesimpulan utama</td><td>Beta relevan secara kondisional; market segmentation cukup.</td><td>Dual beta lebih tepat untuk model kinerja reksa dana saham Indonesia.</td></tr>
+      </table>
+
+      <div class="insight">
+        <strong>Kalimat kunci untuk presentasi:</strong> PSM menolak gagasan bahwa beta tidak relevan, sedangkan Paramita et al. menolak gagasan bahwa single beta sudah cukup. Keduanya sama-sama menunjukkan bahwa kondisi pasar harus diperhitungkan, tetapi Paramita et al. memperluasnya ke konteks reksa dana Indonesia dengan faktor makro dan market timing.
+      </div>
+    </section>
+
+    <section id="kesimpulan">
+      <h2>10. Kesimpulan Utama</h2>
+      <table>
+        <tr><th>Pertanyaan</th><th>Jawaban Paper</th></tr>
+        <tr><td>Apakah beta relevan?</td><td>Ya, tetapi hanya terlihat jelas jika pasar dipisah menjadi up market dan down market.</td></tr>
+        <tr><td>Apakah dual-beta wajib?</td><td>Tidak. Constant beta tetap signifikan dengan market segmentation.</td></tr>
+        <tr><td>Apakah size dan BE/ME adalah risk proxy murni?</td><td>Diragukan, karena pola premium tidak konsisten dengan kompensasi risiko murni.</td></tr>
+        <tr><td>Apa pesan metodologis terpenting?</td><td>Kesalahan agregasi dapat membuat hubungan risiko-return tampak hilang.</td></tr>
+      </table>
+      <footer>
+        Disusun sebagai bahan penjelasan akademik berbasis paper Pettengill, G., Sundaram, S., & Mathur, I. (2002). Payment For Risk: Constant Beta Vs. Dual-Beta Models. The Financial Review, 37, 123–136.
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
